@@ -1,0 +1,25 @@
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+.contentArea {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.contentCollapsed {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+.pageContent {
+  flex: 1;
+  padding: 28px;
+  overflow-y: auto;
+  height: calc(100vh - var(--navbar-height));
+  background: var(--content-bg);
+}
