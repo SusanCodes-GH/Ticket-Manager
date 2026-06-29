@@ -2,19 +2,24 @@ import { db, FieldValue } from '../config/firebaseAdmin.js';
 
 const TICKET_STATUSES = ['open', 'in-progress', 'resolved', 'closed'];
 
-const logActivity = async (action, userId, ticketId) => {
+const logActivity = async (action, userId, ticketId, workspaceId) => {
   const activityRef = db.collection('activities').doc();
   await activityRef.set({
     activityId: activityRef.id,
     action,
     userId,
     ticketId,
+    workspaceId,
     createdAt: FieldValue.serverTimestamp()
   });
 };
 
-export const getAllTickets = async (filters = {}) => {
+export const getAllTickets = async (filters = {}, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+  console.log('[TICKET_SVC] getAllTickets called with workspaceId:', workspaceId, 'filters:', JSON.stringify(filters));
   let query = db.collection('tickets');
+
+  query = query.where('workspaceId', '==', workspaceId);
 
   if (filters.status) {
     query = query.where('status', '==', filters.status);
@@ -33,13 +38,22 @@ export const getAllTickets = async (filters = {}) => {
   }
 
   const snapshot = await query.get();
+  console.log('[TICKET_SVC] Query returned', snapshot.docs.length, 'tickets');
+  if (snapshot.docs.length > 0) {
+    console.log('[TICKET_SVC] First ticket workspaceId:', snapshot.docs[0].data().workspaceId);
+  }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const getTicketsForUser = async (uid) => {
+export const getTicketsForUser = async (uid, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const [assignedSnapshot, createdSnapshot] = await Promise.all([
-    db.collection('tickets').where('assignedTo', '==', uid).get(),
-    db.collection('tickets').where('createdBy', '==', uid).get()
+    db.collection('tickets')
+      .where('workspaceId', '==', workspaceId)
+      .where('assignedTo', '==', uid).get(),
+    db.collection('tickets')
+      .where('workspaceId', '==', workspaceId)
+      .where('createdBy', '==', uid).get()
   ]);
 
   const ticketMap = new Map();
@@ -57,10 +71,15 @@ export const getTicketsForUser = async (uid) => {
   return Array.from(ticketMap.values());
 };
 
-export const getUnassignedTickets = async () => {
+export const getUnassignedTickets = async (workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const [nullSnapshot, emptySnapshot] = await Promise.all([
-    db.collection('tickets').where('assignedTo', '==', null).get(),
-    db.collection('tickets').where('assignedTo', '==', '').get()
+    db.collection('tickets')
+      .where('workspaceId', '==', workspaceId)
+      .where('assignedTo', '==', null).get(),
+    db.collection('tickets')
+      .where('workspaceId', '==', workspaceId)
+      .where('assignedTo', '==', '').get()
   ]);
 
   const ticketMap = new Map();
@@ -78,17 +97,26 @@ export const getUnassignedTickets = async () => {
   return Array.from(ticketMap.values());
 };
 
-export const getTicketById = async (ticketId) => {
+export const getTicketById = async (ticketId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+
   const ticketDoc = await db.collection('tickets').doc(ticketId).get();
 
   if (!ticketDoc.exists) {
     throw new Error('Ticket not found');
   }
 
-  return { id: ticketDoc.id, ...ticketDoc.data() };
+  const ticket = { id: ticketDoc.id, ...ticketDoc.data() };
+
+  if (ticket.workspaceId !== workspaceId) {
+    throw new Error('Ticket not found');
+  }
+
+  return ticket;
 };
 
-export const createTicket = async (data, userId) => {
+export const createTicket = async (data, userId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const ticketRef = db.collection('tickets').doc();
   const timestamp = FieldValue.serverTimestamp();
 
@@ -102,28 +130,27 @@ export const createTicket = async (data, userId) => {
     status: 'open',
     priority: data.priority || 'medium',
     department: data.department || '',
+    workspaceId,
     createdAt: timestamp,
     updatedAt: timestamp
   };
 
   await ticketRef.set(ticketData);
 
-  await logActivity('ticket_created', userId, ticketRef.id);
+  await logActivity('ticket_created', userId, ticketRef.id, workspaceId);
 
   const createdDoc = await ticketRef.get();
   return { id: createdDoc.id, ...createdDoc.data() };
 };
 
-export const updateTicket = async (ticketId, data, userId) => {
-  const ticketDoc = await db.collection('tickets').doc(ticketId).get();
-
-  if (!ticketDoc.exists) {
-    throw new Error('Ticket not found');
-  }
+export const updateTicket = async (ticketId, data, userId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+  const ticket = await getTicketById(ticketId, workspaceId);
 
   const updateData = { ...data };
 
   delete updateData.ticketId;
+  delete updateData.workspaceId;
   delete updateData.createdAt;
   delete updateData.createdBy;
 
@@ -131,18 +158,15 @@ export const updateTicket = async (ticketId, data, userId) => {
 
   await db.collection('tickets').doc(ticketId).update(updateData);
 
-  await logActivity('ticket_updated', userId, ticketId);
+  await logActivity('ticket_updated', userId, ticketId, workspaceId);
 
   const updatedDoc = await db.collection('tickets').doc(ticketId).get();
   return { id: updatedDoc.id, ...updatedDoc.data() };
 };
 
-export const deleteTicket = async (ticketId) => {
-  const ticketDoc = await db.collection('tickets').doc(ticketId).get();
-
-  if (!ticketDoc.exists) {
-    throw new Error('Ticket not found');
-  }
+export const deleteTicket = async (ticketId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+  const ticket = await getTicketById(ticketId, workspaceId);
 
   const commentsSnapshot = await db.collection('comments')
     .where('ticketId', '==', ticketId)
@@ -169,12 +193,9 @@ export const deleteTicket = async (ticketId) => {
   return { message: 'Ticket deleted successfully' };
 };
 
-export const assignTicket = async (ticketId, assignedTo, priority, userId) => {
-  const ticketDoc = await db.collection('tickets').doc(ticketId).get();
-
-  if (!ticketDoc.exists) {
-    throw new Error('Ticket not found');
-  }
+export const assignTicket = async (ticketId, assignedTo, priority, userId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+  const ticket = await getTicketById(ticketId, workspaceId);
 
   const userDoc = await db.collection('users').doc(assignedTo).get();
 
@@ -183,6 +204,10 @@ export const assignTicket = async (ticketId, assignedTo, priority, userId) => {
   }
 
   const userData = userDoc.data()
+
+  if (userData.workspaceId !== workspaceId) {
+    throw new Error('Cannot assign tickets to users outside your workspace.');
+  }
 
   const updateData = {
     assignedTo: assignedTo,
@@ -196,29 +221,26 @@ export const assignTicket = async (ticketId, assignedTo, priority, userId) => {
 
   await db.collection('tickets').doc(ticketId).update(updateData);
 
-  await logActivity('ticket_assigned', userId, ticketId);
+  await logActivity('ticket_assigned', userId, ticketId, workspaceId);
 
   const updatedDoc = await db.collection('tickets').doc(ticketId).get();
   return { id: updatedDoc.id, ...updatedDoc.data() };
 };
 
-export const updateStatus = async (ticketId, status, userId) => {
+export const updateStatus = async (ticketId, status, userId, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   if (!TICKET_STATUSES.includes(status)) {
     throw new Error(`Invalid status. Allowed: ${TICKET_STATUSES.join(', ')}`);
   }
 
-  const ticketDoc = await db.collection('tickets').doc(ticketId).get();
-
-  if (!ticketDoc.exists) {
-    throw new Error('Ticket not found');
-  }
+  const ticket = await getTicketById(ticketId, workspaceId);
 
   await db.collection('tickets').doc(ticketId).update({
     status,
     updatedAt: FieldValue.serverTimestamp()
   });
 
-  await logActivity('ticket_status_changed', userId, ticketId);
+  await logActivity('ticket_status_changed', userId, ticketId, workspaceId);
 
   const updatedDoc = await db.collection('tickets').doc(ticketId).get();
   return { id: updatedDoc.id, ...updatedDoc.data() };
@@ -233,12 +255,9 @@ export const getComments = async (ticketId) => {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const addComment = async (ticketId, userId, comment) => {
-  const ticketDoc = await db.collection('tickets').doc(ticketId).get();
-
-  if (!ticketDoc.exists) {
-    throw new Error('Ticket not found');
-  }
+export const addComment = async (ticketId, userId, comment, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+  const ticket = await getTicketById(ticketId, workspaceId);
 
   const commentRef = db.collection('comments').doc();
   const commentData = {
@@ -246,12 +265,13 @@ export const addComment = async (ticketId, userId, comment) => {
     ticketId,
     userId,
     comment,
+    workspaceId,
     createdAt: FieldValue.serverTimestamp()
   };
 
   await commentRef.set(commentData);
 
-  await logActivity('comment_added', userId, ticketId);
+  await logActivity('comment_added', userId, ticketId, workspaceId);
 
   const createdDoc = await commentRef.get();
   return { id: createdDoc.id, ...createdDoc.data() };

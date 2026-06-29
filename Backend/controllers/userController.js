@@ -23,7 +23,7 @@ export const updateSettings = async (req, res) => {
 export const updateOwnProfile = async (req, res) => {
   try {
     const { name, department } = req.body;
-    const user = await userService.updateUser(req.user.uid, { name, department });
+    const user = await userService.updateUser(req.user.uid, { name, department }, req.user.workspaceId);
     return successResponse(res, user, 'Profile updated successfully');
   } catch (error) {
     return errorResponse(res, error.message, 400);
@@ -32,7 +32,7 @@ export const updateOwnProfile = async (req, res) => {
 
 export const getUsers = async (req, res) => {
   try {
-    const users = await userService.getUsersByCreator(req.user.uid);
+    const users = await userService.getUsersByWorkspace(req.user.workspaceId);
     return successResponse(res, users, 'Users retrieved successfully');
   } catch (error) {
     return errorResponse(res, error.message);
@@ -42,7 +42,7 @@ export const getUsers = async (req, res) => {
 export const getUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await userService.getUserById(id);
+    const user = await userService.getUserById(id, req.user.workspaceId);
     return successResponse(res, user, 'User retrieved successfully');
   } catch (error) {
     return errorResponse(res, error.message, 404);
@@ -57,7 +57,7 @@ export const createUser = async (req, res) => {
       return errorResponse(res, 'Name, email, and password are required.', 400);
     }
 
-    const user = await userService.createTeamMember({ name, email, password, department, createdBy: req.user.uid });
+    const user = await userService.createTeamMember({ name, email, password, department, createdBy: req.user.uid, workspaceId: req.user.workspaceId });
     return successResponse(res, user, 'Team member created successfully', 201);
   } catch (error) {
     return errorResponse(res, error.message, 400);
@@ -67,7 +67,7 @@ export const createUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await userService.updateUser(id, req.body);
+    const user = await userService.updateUser(id, req.body, req.user.workspaceId);
     return successResponse(res, user, 'User updated successfully');
   } catch (error) {
     return errorResponse(res, error.message, 400);
@@ -77,7 +77,7 @@ export const updateUser = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await userService.deleteUser(id);
+    const result = await userService.deleteUser(id, req.user.workspaceId);
     return successResponse(res, result, 'User deleted successfully');
   } catch (error) {
     return errorResponse(res, error.message, 400);

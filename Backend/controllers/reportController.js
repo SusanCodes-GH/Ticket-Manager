@@ -3,7 +3,7 @@ import { successResponse, errorResponse } from '../utils/response.js';
 
 export const getDashboard = async (req, res) => {
   try {
-    const data = await reportService.getDashboardData();
+    const data = await reportService.getDashboardData(req.user.workspaceId);
     return successResponse(res, data, 'Dashboard data retrieved successfully');
   } catch (error) {
     console.error('getDashboard error:', error);
@@ -14,7 +14,7 @@ export const getDashboard = async (req, res) => {
 export const getTicketTrend = async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 7;
-    const data = await reportService.getTicketTrend(days);
+    const data = await reportService.getTicketTrend(days, req.user.workspaceId);
     return successResponse(res, data, 'Trend data retrieved successfully');
   } catch (error) {
     console.error('getTicketTrend error:', error);

@@ -12,11 +12,8 @@ export const registerAdmin = async (req, res) => {
 
     const user = await authService.registerAdmin({ name, email, password, department });
 
-    try {
-      await sendWelcomeEmail({ name, email });
-    } catch (emailError) {
-      console.error('[EMAIL] Failed to send welcome email:', emailError.message);
-    }
+    sendWelcomeEmail({ name, email })
+      .catch(err => console.error('[EMAIL] Welcome email failed:', err.message));
 
     return successResponse(res, user, 'Admin registered successfully', 201);
   } catch (error) {

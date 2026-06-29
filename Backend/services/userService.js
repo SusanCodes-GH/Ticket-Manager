@@ -1,31 +1,34 @@
 import { db, auth, FieldValue } from '../config/firebaseAdmin.js';
 
-export const getUsersByCreator = async (adminUid) => {
+export const getUsersByWorkspace = async (workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const snapshot = await db.collection('users')
-    .where('createdBy', '==', adminUid)
+    .where('workspaceId', '==', workspaceId)
     .get();
 
-  const users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-  const adminDoc = await db.collection('users').doc(adminUid).get();
-  if (adminDoc.exists) {
-    users.push({ id: adminDoc.id, ...adminDoc.data() });
-  }
-
-  return users;
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const getUserById = async (uid) => {
+export const getUserById = async (uid, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+
   const userDoc = await db.collection('users').doc(uid).get();
 
   if (!userDoc.exists) {
     throw new Error('User not found');
   }
 
-  return { id: userDoc.id, ...userDoc.data() };
+  const user = { id: userDoc.id, ...userDoc.data() };
+
+  if (user.workspaceId !== workspaceId) {
+    throw new Error('User not found');
+  }
+
+  return user;
 };
 
-export const createTeamMember = async ({ name, email, password, department, createdBy }) => {
+export const createTeamMember = async ({ name, email, password, department, createdBy, workspaceId }) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const userRecord = await auth.createUser({
     email,
     password,
@@ -40,6 +43,7 @@ export const createTeamMember = async ({ name, email, password, department, crea
     department: department || '',
     status: 'active',
     createdBy: createdBy || null,
+    workspaceId: workspaceId,
     createdAt: FieldValue.serverTimestamp()
   };
 
@@ -48,11 +52,14 @@ export const createTeamMember = async ({ name, email, password, department, crea
   return { id: userRecord.uid, ...userData };
 };
 
-export const updateUser = async (uid, data) => {
+export const updateUser = async (uid, data, workspaceId) => {
+  const existing = await getUserById(uid, workspaceId);
+
   const updateData = { ...data };
 
   delete updateData.uid;
   delete updateData.role;
+  delete updateData.workspaceId;
   delete updateData.createdAt;
 
   if (updateData.email) {
@@ -69,10 +76,17 @@ export const updateUser = async (uid, data) => {
   return { id: updatedDoc.id, ...updatedDoc.data() };
 };
 
-export const deleteUser = async (uid) => {
+export const deleteUser = async (uid, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const userDoc = await db.collection('users').doc(uid).get();
 
   if (!userDoc.exists) {
+    throw new Error('User not found');
+  }
+
+  const user = { id: userDoc.id, ...userDoc.data() };
+
+  if (user.workspaceId !== workspaceId) {
     throw new Error('User not found');
   }
 

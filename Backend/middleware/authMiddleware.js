@@ -18,10 +18,15 @@ export const authenticate = async (req, res, next) => {
       return errorResponse(res, 'User not found.', 404);
     }
 
+    const userData = userDoc.data();
+    // console.log('[AUTH] Decoded token UID:', decodedToken.uid);
+    // console.log('[AUTH] Firestore user doc:', JSON.stringify({ ...userData, createdAt: undefined, updatedAt: undefined }));
+    // console.log('[AUTH] workspaceId from DB:', userData.workspaceId);
+
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email,
-      ...userDoc.data()
+      ...userData
     };
 
     next();

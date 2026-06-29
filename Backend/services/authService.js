@@ -14,6 +14,7 @@ export const registerAdmin = async ({ name, email, password, department }) => {
     role: 'admin',
     department: department || '',
     status: 'active',
+    workspaceId: userRecord.uid,
     createdAt: FieldValue.serverTimestamp()
   };
 

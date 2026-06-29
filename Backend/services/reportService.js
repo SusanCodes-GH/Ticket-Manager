@@ -1,10 +1,13 @@
 import { db, FieldValue } from '../config/firebaseAdmin.js';
 
-export const getDashboardData = async () => {
+export const getDashboardData = async (workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
   const [ticketsSnapshot, usersSnapshot, activitiesSnapshot] = await Promise.all([
-    db.collection('tickets').get(),
-    db.collection('users').get(),
-    db.collection('activities').orderBy('createdAt', 'desc').limit(10).get()
+    db.collection('tickets').where('workspaceId', '==', workspaceId).get(),
+    db.collection('users').where('workspaceId', '==', workspaceId).get(),
+    db.collection('activities')
+      .where('workspaceId', '==', workspaceId)
+      .orderBy('createdAt', 'desc').limit(10).get()
   ]);
 
   const tickets = ticketsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -111,12 +114,15 @@ export const getDashboardData = async () => {
   };
 };
 
-export const getTicketTrend = async (days = 7) => {
+export const getTicketTrend = async (days = 7, workspaceId) => {
+  if (!workspaceId) throw new Error('workspaceId is required');
+
   const since = new Date();
-  since.setDate(since.getDate() - days);
-  since.setHours(0, 0, 0, 0);
+  since.setUTCDate(since.getUTCDate() - days + 1);
+  since.setUTCHours(0, 0, 0, 0);
 
   const snapshot = await db.collection('tickets')
+    .where('workspaceId', '==', workspaceId)
     .where('createdAt', '>=', since)
     .orderBy('createdAt', 'asc')
     .get();
@@ -125,7 +131,7 @@ export const getTicketTrend = async (days = 7) => {
 
   for (let i = 0; i < days; i++) {
     const d = new Date(since);
-    d.setDate(d.getDate() + i);
+    d.setUTCDate(d.getUTCDate() + i);
     const key = d.toISOString().split('T')[0];
     dailyCounts[key] = 0;
   }
@@ -138,6 +144,8 @@ export const getTicketTrend = async (days = 7) => {
         dateStr = data.createdAt.split('T')[0];
       } else if (data.createdAt._seconds) {
         dateStr = new Date(data.createdAt._seconds * 1000).toISOString().split('T')[0];
+      } else if (data.createdAt.seconds !== undefined) {
+        dateStr = new Date(data.createdAt.seconds * 1000).toISOString().split('T')[0];
       } else if (data.createdAt.toDate) {
         dateStr = data.createdAt.toDate().toISOString().split('T')[0];
       } else {
