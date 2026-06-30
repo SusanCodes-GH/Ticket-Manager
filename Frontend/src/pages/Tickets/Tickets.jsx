@@ -317,7 +317,8 @@ export default function Tickets() {
       <TicketModal
         isOpen={modalMode === "view"}
         onClose={closeModal}
-        title={selectedTicket?.id || "Ticket Details"}
+        // title={selectedTicket?.id || "Ticket Details"}
+        title={"Ticket Details"}
         size="lg"
       >
         {viewLoading && (
@@ -412,6 +413,7 @@ export default function Tickets() {
             <CommentSection
               comments={selectedTicket.comments || []}
               onAddComment={handleAddComment}
+              resolveName={resolveName}
             />
           </>
         )}

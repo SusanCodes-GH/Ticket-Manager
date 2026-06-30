@@ -264,14 +264,15 @@
   flex: 1;
   max-width: 120px;
   height: 6px;
-  background: var(--surface-hover);
+  /* background: var(--surface-hover); */
+  background: #cecaca;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--primary-color);
+  background: var(--success);
   border-radius: 3px;
   transition: width 0.4s ease;
 }

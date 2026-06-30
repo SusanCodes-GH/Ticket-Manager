@@ -54,7 +54,7 @@ export default function Dashboard() {
           <p className={styles.pageSubtitle}>
             {isAdmin
               ? "Overview of your ticket system"
-              : `Welcome back, ${currentUser.name.split(" ")[0]}`}
+              : `Welcome back, ${currentUser.name?.split(" ")[0]}`}
           </p>
         </div>
         <button
@@ -145,7 +145,7 @@ export default function Dashboard() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>ID</th>
+                <th>S.NO</th>
                 <th>Title</th>
                 <th>Status</th>
                 <th>Priority</th>
@@ -154,9 +154,10 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {myTickets.slice(0, 6).map((ticket) => (
+              {myTickets.slice(0, 6).map((ticket, i) => (
                 <tr key={ticket.id}>
-                  <td className={styles.ticketId}>{ticket.id}</td>
+                  {console.log("Ticket",ticket)}
+                  <td className={styles.ticketId}>{i + 1}</td>
                   <td>{ticket.title}</td>
                   <td>
                     <span
@@ -180,7 +181,7 @@ export default function Dashboard() {
                     </span>
                   </td>
                   <td>{ticket.createdDate}</td>
-                  <td>{ticket.assignedTo || "Unassigned"}</td>
+                  <td>{ticket.assignedToNm || ticket.assignedTo || "Unassigned"}</td>
                 </tr>
               ))}
             </tbody>

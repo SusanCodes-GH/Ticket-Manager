@@ -29,6 +29,9 @@
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --radius: 8px;
   --primary-hover: #1d4ed8;
+  --primary-color: #577fec; 
+  --overlay-box: #fcffff;
+  --shadow-lg: #615757;
 }
 
 [data-theme="dark"] {
@@ -39,9 +42,11 @@
   --border: #334155;
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   --card-bg: #1e293b;
+  --overlay-box: rgba(0, 0, 0, 0.7);
   --surface-hover: #334155;
   --modal-overlay: rgba(0, 0, 0, 0.7);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+  /* --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5); */
+  --shadow-lg: #665d5d;
   --dropdown-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 

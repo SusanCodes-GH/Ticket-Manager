@@ -55,7 +55,7 @@ export default function UserTable({ users = [], onView, onEdit, onDelete }) {
         <thead>
           <tr>
             <th>Name</th>
-            <th>Email</th>
+            {/* <th>Email</th> */}
             <th>Role</th>
             <th>Status</th>
             <th>Department</th>
@@ -82,7 +82,7 @@ export default function UserTable({ users = [], onView, onEdit, onDelete }) {
                     </div>
                   </div>
                 </td>
-                <td className={styles.userEmail}>{user.email}</td>
+                {/* <td className={styles.userEmail}>{user.email}</td> */}
                 <td>
                   <span
                     className={`${styles.roleBadge} ${
@@ -129,14 +129,14 @@ export default function UserTable({ users = [], onView, onEdit, onDelete }) {
                       <i className="fa-solid fa-pen"></i>
                       Edit
                     </button>
-                    <button
+                    {user.role !== "admin" && (<button
                       className={`${styles.actionBtn} ${styles.deleteBtn}`}
                       onClick={() => onDelete(user)}
                       title="Delete User"
                     >
                       <i className="fa-solid fa-trash-can"></i>
                       Delete
-                    </button>
+                    </button>)}
                   </div>
                 </td>
               </tr>

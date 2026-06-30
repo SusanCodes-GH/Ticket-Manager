@@ -50,6 +50,7 @@ const toLocaleString = (ts) => {
 const normalizeComment = (comment) => ({
   id: comment.id || comment.commentId,
   user: comment.userId || comment.user || '',
+  userName: comment.userName || '',
   date: toLocaleString(comment.createdAt),
   text: comment.comment || comment.text || '',
 });

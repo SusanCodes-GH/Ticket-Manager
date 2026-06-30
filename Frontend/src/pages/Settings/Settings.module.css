@@ -57,7 +57,8 @@
 
 .sectionHeader i {
   font-size: 20px;
-  color: var(--primary-color);
+  /* color: var(--primary-color); */
+  color: #fff;
   width: 36px;
   height: 36px;
   display: flex;
@@ -222,7 +223,8 @@
 
 .themeOptionActive {
   border-color: var(--primary-color);
-  color: var(--primary-color);
+  /* color: var(--primary-color); */
+  color: #fff;
   background: var(--primary-light);
 }
 

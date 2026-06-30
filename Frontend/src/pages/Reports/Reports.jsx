@@ -95,6 +95,7 @@ export default function Reports() {
     try {
       const result = await getDashboardData();
       setData(result);
+      loadTrend();
     } catch (err) {
       toast.error(err.message || "Failed to load report data");
     } finally {
@@ -391,7 +392,7 @@ export default function Reports() {
             </div>
           ) : (
             <div className={styles.activityTimeline}>
-              {recentActivities.map((a, i) => (
+              {recentActivities.slice(0, 5).map((a, i) => (
                 <div key={a.activityId || i} className={styles.activityItem}>
                   <div className={styles.activityDot}></div>
                   <div className={styles.activityBody}>

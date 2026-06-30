@@ -22,7 +22,7 @@ function getColorFromId(id) {
 
 function getInitials(name) {
   return name
-    .split(" ")
+    ?.split(" ")
     .map((w) => w[0])
     .join("")
     .toUpperCase()

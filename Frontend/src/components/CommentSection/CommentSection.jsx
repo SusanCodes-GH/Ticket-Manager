@@ -22,7 +22,7 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
-export default function CommentSection({ comments = [], onAddComment }) {
+export default function CommentSection({ comments = [], onAddComment, resolveName }) {
   const [newComment, setNewComment] = useState("");
 
   const handleSubmit = () => {
@@ -50,23 +50,31 @@ export default function CommentSection({ comments = [], onAddComment }) {
         <div className={styles.emptyComments}>No comments yet.</div>
       ) : (
         <div className={styles.timeline}>
-          {comments.map((comment) => (
-            <div key={comment.id} className={styles.comment}>
-              <div
-                className={styles.avatar}
-                style={{ background: getColor(comment.user) }}
-              >
-                {getInitials(comment.user)}
-              </div>
-              <div className={styles.content}>
-                <div className={styles.meta}>
-                  <span className={styles.userName}>{comment.user}</span>
-                  <span className={styles.date}>{comment.date}</span>
+          {comments.map((comment) => {
+            const resolved = resolveName ? resolveName(comment.user) : null;
+            const displayName = comment.userName ||
+              (resolved !== comment.user ? resolved : '') ||
+              'Unknown User';
+
+            return (
+              <div key={comment.id} className={styles.comment}>
+                <div
+                  className={styles.avatar}
+                  style={{ background: getColor(displayName) }}
+                >
+                  {getInitials(displayName)}
                 </div>
-                <div className={styles.text}>{comment.text}</div>
+                <div className={styles.content}>
+                  <div className={styles.meta}>
+                    {/* <span className={styles.userName}>{displayName}</span> */}
+                    <span className={styles.userName}>{comment.userName}</span>
+                    <span className={styles.date}>{comment.date}</span>
+                  </div>
+                  <div className={styles.text}>{comment.text}</div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
