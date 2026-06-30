@@ -171,7 +171,7 @@ export const addComment = async (req, res) => {
       }
     }
 
-    const result = await ticketService.addComment(id, req.user.uid, comment, req.user.workspaceId);
+    const result = await ticketService.addComment(id, req.user.uid, comment, req.user.workspaceId, req.user.name, req.user.role);
     return successResponse(res, result, 'Comment added successfully', 201);
   } catch (error) {
     return errorResponse(res, error.message, 400);

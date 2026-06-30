@@ -16,7 +16,7 @@ const logActivity = async (action, userId, ticketId, workspaceId) => {
 
 export const getAllTickets = async (filters = {}, workspaceId) => {
   if (!workspaceId) throw new Error('workspaceId is required');
-  console.log('[TICKET_SVC] getAllTickets called with workspaceId:', workspaceId, 'filters:', JSON.stringify(filters));
+  // console.log('[TICKET_SVC] getAllTickets called with workspaceId:', workspaceId, 'filters:', JSON.stringify(filters));
   let query = db.collection('tickets');
 
   query = query.where('workspaceId', '==', workspaceId);
@@ -38,10 +38,10 @@ export const getAllTickets = async (filters = {}, workspaceId) => {
   }
 
   const snapshot = await query.get();
-  console.log('[TICKET_SVC] Query returned', snapshot.docs.length, 'tickets');
-  if (snapshot.docs.length > 0) {
-    console.log('[TICKET_SVC] First ticket workspaceId:', snapshot.docs[0].data().workspaceId);
-  }
+  // console.log('[TICKET_SVC] Query returned', snapshot.docs.length, 'tickets');
+  // if (snapshot.docs.length > 0) {
+  //   console.log('[TICKET_SVC] First ticket workspaceId:', snapshot.docs[0].data().workspaceId);
+  // }
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
@@ -255,7 +255,7 @@ export const getComments = async (ticketId) => {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
-export const addComment = async (ticketId, userId, comment, workspaceId) => {
+export const addComment = async (ticketId, userId, comment, workspaceId, userName = '', userRole = '') => {
   if (!workspaceId) throw new Error('workspaceId is required');
   const ticket = await getTicketById(ticketId, workspaceId);
 
@@ -264,6 +264,8 @@ export const addComment = async (ticketId, userId, comment, workspaceId) => {
     commentId: commentRef.id,
     ticketId,
     userId,
+    userName,
+    userRole,
     comment,
     workspaceId,
     createdAt: FieldValue.serverTimestamp()
